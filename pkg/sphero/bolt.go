@@ -10,6 +10,7 @@ import (
 
 type SpheroBolt struct {
 	Api         bluetooth.DeviceCharacteristic
+	Connection  *bluetooth.Device
 	seq         uint8
 	orientation uint16
 }
@@ -72,7 +73,7 @@ func NewBolt(adapter *bluetooth.Adapter, name string) (*SpheroBolt, error) {
 		return nil, fmt.Errorf("couldn't enable notifications: %s\n", err.Error())
 	}
 
-	return &SpheroBolt{Api: apiCh}, nil
+	return &SpheroBolt{Api: apiCh, Connection: dev}, nil
 }
 
 func (bot *SpheroBolt) NextSeq() uint8 {
@@ -133,7 +134,9 @@ func (bot *SpheroBolt) PowerOff() error {
 		0x01,
 		bot.NextSeq(),
 		[]byte{})
-	return packet.Send(bot.Api)
+	utils.Must("send power off", packet.Send(bot.Api))
+	utils.Must("disconnect", bot.Connection.Disconnect())
+	return nil
 }
 
 func (bot *SpheroBolt) LightUpGrid(r, g, b uint8) error {
