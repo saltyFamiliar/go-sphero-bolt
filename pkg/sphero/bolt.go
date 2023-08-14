@@ -9,8 +9,9 @@ import (
 )
 
 type SpheroBolt struct {
-	Api bluetooth.DeviceCharacteristic
-	seq uint8
+	Api         bluetooth.DeviceCharacteristic
+	seq         uint8
+	orientation uint16
 }
 
 func NewBolt(adapter *bluetooth.Adapter, name string) (*SpheroBolt, error) {
@@ -91,7 +92,9 @@ func (bot *SpheroBolt) PowerOn() error {
 	return packet.Send(bot.Api)
 }
 
-func (bot *SpheroBolt) Roll() error {
+func (bot *SpheroBolt) SetSpeed(speed uint8) error {
+	highByte := uint8(bot.orientation >> 8)
+	lowByte := uint8(bot.orientation & 0xFF)
 	packet := comms.NewPacket(
 		flag.IsActivity|flag.RequestResponse|flag.HasTargetID|flag.HasSourceID,
 		0x12,
@@ -99,11 +102,16 @@ func (bot *SpheroBolt) Roll() error {
 		0x16,
 		0x07,
 		bot.NextSeq(),
-		[]byte{0x32, 0x00, 0x5a, 0x00})
+		[]byte{speed, highByte, lowByte, 0x00})
 	return packet.Send(bot.Api)
 }
 
-func (bot *SpheroBolt) StopRoll() error {
+func (bot *SpheroBolt) SetDirection(degrees int) error {
+	degreeBytes := uint16(degrees % 360)
+
+	highByte := uint8(degreeBytes >> 8)
+	lowByte := uint8(degreeBytes & 0xFF)
+
 	packet := comms.NewPacket(
 		flag.IsActivity|flag.RequestResponse|flag.HasTargetID|flag.HasSourceID,
 		0x12,
@@ -111,7 +119,8 @@ func (bot *SpheroBolt) StopRoll() error {
 		0x16,
 		0x07,
 		bot.NextSeq(),
-		[]byte{0x00, 0x00, 0x5a, 0x00})
+		[]byte{0x00, highByte, lowByte, 0x00})
+	bot.orientation = degreeBytes
 	return packet.Send(bot.Api)
 }
 
@@ -127,10 +136,14 @@ func (bot *SpheroBolt) PowerOff() error {
 	return packet.Send(bot.Api)
 }
 
-//func (bot *SpheroBolt) LightUpGrid() error {
-//	flag := NewPacket(
-//		flag.RequestResponse|flag.IsActivity|flag.HasTargetID|flag.HasSourceID,
-//		bot.NextSeq(),
-//		[]byte{0x12, 0x01, 0x1a, 0x2f, 0x0e, 0x00, 0x00})
-//	return flag.Send(bot.Api)
-//}
+func (bot *SpheroBolt) LightUpGrid(r, g, b uint8) error {
+	packet := comms.NewPacket(
+		flag.RequestResponse|flag.IsActivity|flag.HasTargetID|flag.HasSourceID,
+		0x12,
+		0x01,
+		0x1a,
+		0x2f,
+		bot.NextSeq(),
+		[]byte{r, g, b})
+	return packet.Send(bot.Api)
+}
