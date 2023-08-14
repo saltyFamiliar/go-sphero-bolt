@@ -1,10 +1,10 @@
 package sphero
 
 import (
-	"bolt/pkg/comms"
-	"bolt/pkg/flag"
-	. "bolt/pkg/utils"
 	"fmt"
+	"github.com/saltyFamiliar/go-sphero-bolt/pkg/comms"
+	"github.com/saltyFamiliar/go-sphero-bolt/pkg/flag"
+	"github.com/saltyFamiliar/go-sphero-bolt/pkg/utils"
 	"tinygo.org/x/bluetooth"
 )
 
@@ -64,7 +64,7 @@ func NewBolt(adapter *bluetooth.Adapter, name string) (*SpheroBolt, error) {
 	err = apiCh.EnableNotifications(func(buf []byte) {
 		notifyBuf = append(notifyBuf, buf[0])
 		if buf[0] == 0xd8 {
-			fmt.Println("full notification: ", ByteString(notifyBuf))
+			fmt.Println("full notification: ", utils.ByteString(notifyBuf))
 			notifyBuf = []byte{}
 		}
 	})

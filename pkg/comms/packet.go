@@ -1,8 +1,8 @@
 package comms
 
 import (
-	. "bolt/pkg/utils"
 	"fmt"
+	"github.com/saltyFamiliar/go-sphero-bolt/pkg/utils"
 	"time"
 	"tinygo.org/x/bluetooth"
 )
@@ -47,6 +47,6 @@ func (packet *Packet) Send(api bluetooth.DeviceCharacteristic) error {
 		return err
 	}
 	time.Sleep(1 * time.Second)
-	fmt.Printf("Sent %02d bytes: %s\n", size, ByteString(packet.bytes))
+	fmt.Printf("Sent %02d bytes: %s\n", size, utils.ByteString(packet.bytes))
 	return nil
 }
