@@ -139,6 +139,18 @@ func (bot *SpheroBolt) PowerOff() error {
 	return nil
 }
 
+func (bot *SpheroBolt) SetPixel(x, y, r, g, b uint8) error {
+	packet := comms.NewPacket(
+		0x3A,
+		0x12,
+		0x01,
+		0x1a,
+		0x2d,
+		bot.NextSeq(),
+		[]byte{x, y, r, g, b})
+	return packet.Send(bot.Api)
+}
+
 func (bot *SpheroBolt) LightUpGrid(r, g, b uint8) error {
 	packet := comms.NewPacket(
 		flag.RequestResponse|flag.IsActivity|flag.HasTargetID|flag.HasSourceID,

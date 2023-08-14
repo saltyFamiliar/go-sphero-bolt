@@ -21,14 +21,16 @@ func main() {
 	time.Sleep(1 * time.Second)
 
 	// roll along square path (rhomboid in practice)
-	for i := 0; i < 4; i++ {
-		utils.Must("set direction", bolt.SetDirection(i*90))
-
-		utils.Must("start moving", bolt.SetSpeed(20))
-		time.Sleep(1 * time.Second)
-
-		utils.Must("stop moving", bolt.SetSpeed(0))
-	}
+	//for i := 0; i < 4; i++ {
+	//	utils.Must("set direction", bolt.SetDirection(i*90))
+	//
+	//	utils.Must("start moving", bolt.SetSpeed(20))
+	//
+	//	utils.Must("stop moving", bolt.SetSpeed(0))
+	//}
+	utils.Must("set pix", bolt.SetPixel(0, 0, 255, 0, 0))
+	utils.Must("set pix", bolt.SetPixel(0, 1, 255, 0, 0))
+	time.Sleep(3 * time.Second)
 
 	utils.Must("turn off", bolt.PowerOff())
 	time.Sleep(1 * time.Second)
