@@ -2,10 +2,15 @@ package sphero
 
 import (
 	"fmt"
+
 	"github.com/saltyFamiliar/go-sphero-bolt/pkg/comms"
 	"github.com/saltyFamiliar/go-sphero-bolt/pkg/flag"
 	"github.com/saltyFamiliar/go-sphero-bolt/pkg/utils"
 	"tinygo.org/x/bluetooth"
+)
+
+const (
+	LEDMatrixLen = 8
 )
 
 type SpheroBolt struct {
@@ -65,7 +70,7 @@ func NewBolt(adapter *bluetooth.Adapter, name string) (*SpheroBolt, error) {
 	err = apiCh.EnableNotifications(func(buf []byte) {
 		notifyBuf = append(notifyBuf, buf[0])
 		if buf[0] == 0xd8 {
-			fmt.Println("full notification: ", utils.ByteString(notifyBuf))
+			//fmt.Println("full notification: ", utils.ByteString(notifyBuf))
 			notifyBuf = []byte{}
 		}
 	})
@@ -94,8 +99,13 @@ func (bot *SpheroBolt) PowerOn() error {
 }
 
 func (bot *SpheroBolt) SetSpeed(speed uint8) error {
+	fmt.Println("setting speed while orientation is ", bot.orientation)
 	highByte := uint8(bot.orientation >> 8)
 	lowByte := uint8(bot.orientation & 0xFF)
+	//lastByte := 0x00
+	//if bot.orientation == 180 {
+	//	lastByte = 0x01
+	//}
 	packet := comms.NewPacket(
 		flag.IsActivity|flag.RequestResponse|flag.HasTargetID|flag.HasSourceID,
 		0x12,
@@ -103,11 +113,18 @@ func (bot *SpheroBolt) SetSpeed(speed uint8) error {
 		0x16,
 		0x07,
 		bot.NextSeq(),
-		[]byte{speed, highByte, lowByte, 0x00})
+		[]byte{speed, highByte, lowByte, 0x0})
 	return packet.Send(bot.Api)
 }
 
 func (bot *SpheroBolt) SetDirection(degrees int) error {
+	degreeBytes := uint16(degrees % 360)
+	bot.orientation = degreeBytes
+
+	return nil
+}
+
+func (bot *SpheroBolt) Rotate(degrees int) error {
 	degreeBytes := uint16(degrees % 360)
 
 	highByte := uint8(degreeBytes >> 8)
@@ -149,6 +166,16 @@ func (bot *SpheroBolt) SetPixel(x, y, r, g, b uint8) error {
 		bot.NextSeq(),
 		[]byte{x, y, r, g, b})
 	return packet.Send(bot.Api)
+}
+
+func (bot *SpheroBolt) SetLEDMatrix(matrix [][]byte, r, g, b uint8) {
+	for i := 0; i < LEDMatrixLen; i++ {
+		for j := 0; j < LEDMatrixLen; j++ {
+			if matrix[i][j] == 1 {
+				bot.SetPixel(uint8(j), uint8(i), r, g, b)
+			}
+		}
+	}
 }
 
 func (bot *SpheroBolt) LightUpGrid(r, g, b uint8) error {
