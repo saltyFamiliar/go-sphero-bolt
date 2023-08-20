@@ -2,6 +2,7 @@ package sphero
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/saltyFamiliar/go-sphero-bolt/pkg/comms"
 	"github.com/saltyFamiliar/go-sphero-bolt/pkg/flag"
@@ -98,6 +99,7 @@ func (bot *SpheroBolt) PowerOn() error {
 	return packet.Send(bot.Api)
 }
 
+// speed gets reset to 0 about every 2.75 seconds
 func (bot *SpheroBolt) SetSpeed(speed uint8) error {
 	fmt.Println("setting speed while orientation is ", bot.orientation)
 	highByte := uint8(bot.orientation >> 8)
@@ -115,6 +117,25 @@ func (bot *SpheroBolt) SetSpeed(speed uint8) error {
 		bot.NextSeq(),
 		[]byte{speed, highByte, lowByte, 0x0})
 	return packet.Send(bot.Api)
+}
+
+func (bot *SpheroBolt) Move(direction int, speed uint8, milliseconds int) error {
+	bot.SetDirection(direction)
+	timeToReset := 2750
+
+	// speed gets reset to 0 about every 2.75 seconds
+	// so keep setting speed until total duration is over
+	for ; milliseconds > 0; milliseconds -= timeToReset {
+		bot.SetSpeed(speed)
+		wait := timeToReset
+		if milliseconds < timeToReset {
+			wait = milliseconds
+		}
+		fmt.Println("waiting ", wait)
+		time.Sleep(time.Duration(wait) * time.Millisecond)
+	}
+	bot.SetSpeed(0)
+	return nil
 }
 
 func (bot *SpheroBolt) SetDirection(degrees int) error {
